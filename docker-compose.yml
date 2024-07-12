@@ -1,0 +1,102 @@
+version: "3.8"
+
+x-common-configuration: &default-configuration
+  environment:
+    - DISPLAY
+    - QT_X11_NO_MITSHM=1 
+  volumes:
+    - "/tmp/.X11-unix/:/tmp/.X11-unix/:rw"
+    - "$HOME/.Xauthority:/root/.Xauthority:rw"
+    - "/dev/:/dev/"
+
+
+services:
+  ubicoders_u20_px4:
+    container_name: ubicoders_u20_px4_cnt
+    build:
+      context: .
+      dockerfile: ./u20_px4/Dockerfile
+    image: ubicoders/px4:v1.14
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+  ubicoders_ros1_noetic:
+    container_name: ubicoders_ros1_noetic_cnt
+    build:
+      context: .
+      dockerfile: ./ros1noetic/Dockerfile
+    image: ubicoders/ros1:noetic
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t    
+    <<: *default-configuration
+
+  ubicoders_ros1_noetic_px4:
+    container_name: ubicoders_ros1_noetic_px4_cnt
+    build:
+      context: .
+      dockerfile: ./ros1px4/Dockerfile
+    image: ubicoders/ros1:noetic_px4
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    depends_on:
+      - ubicoders_ros1_noetic
+    <<: *default-configuration
+
+  ubicoders_ros1_noetic_px4_mavros:
+    container_name: ubicoders_ros1_noetic_px4_mavros_cnt
+    build:
+      context: .
+      dockerfile: ./ros1px4mavros/Dockerfile
+    image: ubicoders/ros1:noetic_px4_mavros
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    depends_on:
+      - ubicoders_ros1_noetic_px4
+    <<: *default-configuration
+
+  ubicoders_ros2_humble:
+    container_name: ubicoders_ros2_humble_cnt
+    build:
+      context: .
+      dockerfile: ./ros2humble/Dockerfile
+    image: ubicoders/ros2:humble
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    <<: *default-configuration
+  
+  ubicoders_ros2_humble_px4:
+    container_name: ubicoders_ros2_humble_px4_cnt
+    build: 
+      context: .
+      dockerfile: ./ros2px4/Dockerfile
+    image: ubicoders/ros2:humble_px4
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t    
+    depends_on:
+      - ubicoders_ros2_humble
+    <<: *default-configuration
+  
+  ubicoders_ros2_humble_px4uxrcedds:
+    container_name: ubicoders_ros2_humble_px4_uxrcedds_cnt
+    build: 
+      context: .
+      dockerfile: ./ros2px4uxrcedds/Dockerfile
+    image: ubicoders/ros2:humble_px4_uxrcedds
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t    
+    depends_on:
+      - ubicoders_ros2_humble_px4
+    <<: *default-configuration
