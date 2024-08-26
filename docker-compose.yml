@@ -9,7 +9,7 @@ x-common-configuration: &default-configuration
     - "$HOME/.Xauthority:/root/.Xauthority:rw"
     - "/dev/:/dev/"
 
-x-cuda-configuration: &default-configuration
+x-cuda-configuration: &cuda-configuration
   runtime: nvidia
   environment:
     - DISPLAY
@@ -127,3 +127,16 @@ services:
     privileged: true
     stdin_open: true # docker run -i
     tty: true        # docker run -t    
+    <<: *cuda-configuration
+
+  ubicoders_ros2_humble_cuda12_ocv_zed:
+      container_name: ubicoders_ros2_humble_cuda12_ocv_zed_cnt
+      build: 
+        context: .
+        dockerfile: ./u22cuda121_ros2humble_zed/Dockerfile
+      image: ubicoders/ros2:humble_cuda12_ocv_zed
+      network_mode: host
+      privileged: true
+      stdin_open: true # docker run -i
+      tty: true        # docker run -t    
+      <<: *cuda-configuration    
