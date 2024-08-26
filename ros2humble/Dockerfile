@@ -123,5 +123,7 @@ RUN bash /root/installzsh.bash
 # setup some  environment
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
-RUN echo "source /opt/ros/foxy/setup.bash" >> /root/.bashrc
+RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 RUN echo "alias python=python3" >> /root/.bashrc
+RUN echo "source /opt/ros/humble/setup.zsh" >> /root/.zshrc
+RUN echo "alias python=python3" >> /root/.zshrc
