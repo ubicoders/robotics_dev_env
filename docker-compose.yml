@@ -26,7 +26,7 @@ x-cuda-configuration: &cuda-configuration
               count: all
               capabilities: [gpu, compute, utility, graphics, compat32, video, display]
 
-services:
+services:      
   ubicoders_u20_px4:
     container_name: ubicoders_u20_px4_cnt
     build:
@@ -37,6 +37,7 @@ services:
     privileged: true
     stdin_open: true # docker run -i
     tty: true        # docker run -t
+    <<: *default-configuration
   ubicoders_ros1_noetic:
     container_name: ubicoders_ros1_noetic_cnt
     build:
