@@ -100,13 +100,10 @@ RUN apt-get install python3-tk -y
 
 # ============ ROS2 packages
 # install Fast-RTPS dependencies
-RUN apt install --no-install-recommends -y \
-  libasio-dev \
-  libtinyxml2-dev
+RUN apt install --no-install-recommends -y libasio-dev libtinyxml2-dev
 
 # install Cyclone DDS dependencies
-RUN apt install --no-install-recommends -y \
-  libcunit1-dev
+RUN apt install --no-install-recommends -y libcunit1-dev
 
 # ====================================================
 

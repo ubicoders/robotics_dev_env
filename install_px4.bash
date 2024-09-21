@@ -1,6 +1,8 @@
 #! /usr/bin/env bash
 
-## Bash script to setup PX4 development environment on Ubuntu LTS (20.04, 18.04, 16.04).
+set -e
+
+## Bash script to setup PX4 development environment on Ubuntu LTS (22.04, 20.04, 18.04).
 ## Can also be used in docker.
 ##
 ## Installs:
@@ -8,8 +10,6 @@
 ## - NuttX toolchain (omit with arg: --no-nuttx)
 ## - jMAVSim and Gazebo9 simulator (omit with arg: --no-sim-tools)
 ##
-## Not Installs:
-## - FastRTPS and FastCDR
 
 INSTALL_NUTTX="true"
 INSTALL_SIM="true"
@@ -25,7 +25,6 @@ do
 	if [[ $arg == "--no-sim-tools" ]]; then
 		INSTALL_SIM="false"
 	fi
-
 done
 
 # detect if running in docker
@@ -65,17 +64,18 @@ elif [[ "${UBUNTU_RELEASE}" == "18.04" ]]; then
 	echo "Ubuntu 18.04"
 elif [[ "${UBUNTU_RELEASE}" == "20.04" ]]; then
 	echo "Ubuntu 20.04"
+elif [[ "${UBUNTU_RELEASE}" == "22.04" ]]; then
+	echo "Ubuntu 22.04"
 fi
 
 
 echo
 echo "Installing PX4 general dependencies"
 
-apt-get update -y --quiet
-DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
+sudo apt-get update -y --quiet
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
 	astyle \
 	build-essential \
-	ccache \
 	cmake \
 	cppcheck \
 	file \
@@ -84,6 +84,9 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends instal
 	gdb \
 	git \
 	lcov \
+	libfuse2 \
+	libxml2-dev \
+	libxml2-utils \
 	make \
 	ninja-build \
 	python3 \
@@ -97,16 +100,16 @@ DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends instal
 	zip \
 	;
 
-if [[ "${UBUNTU_RELEASE}" == "16.04" ]]; then
-	echo "Installing Ubuntu 16.04 PX4-compatible ccache version"
-	wget -O /tmp/ccache_3.4.1-1_amd64.deb http://launchpadlibrarian.net/356662933/ccache_3.4.1-1_amd64.deb
-	dpkg -i /tmp/ccache_3.4.1-1_amd64.deb
-fi
-
 # Python3 dependencies
 echo
 echo "Installing PX4 Python3 dependencies"
-python3 -m pip install --user -r ${DIR}/requirements.txt
+if [ -n "$VIRTUAL_ENV" ]; then
+	# virtual environments don't allow --user option
+	python -m pip install -r ${DIR}/requirements.txt
+else
+	# older versions of Ubuntu require --user option
+	python3 -m pip install --user -r ${DIR}/requirements.txt
+fi
 
 # NuttX toolchain (arm-none-eabi-gcc)
 if [[ $INSTALL_NUTTX == "true" ]]; then
@@ -114,7 +117,7 @@ if [[ $INSTALL_NUTTX == "true" ]]; then
 	echo
 	echo "Installing NuttX dependencies"
 
-	DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
 		automake \
 		binutils-dev \
 		bison \
@@ -126,13 +129,13 @@ if [[ $INSTALL_NUTTX == "true" ]]; then
 		genromfs \
 		gettext \
 		gperf \
-		kconfig-frontends \
 		libelf-dev \
 		libexpat-dev \
 		libgmp-dev \
 		libisl-dev \
 		libmpc-dev \
 		libmpfr-dev \
+		libncurses5 \
 		libncurses5-dev \
 		libncursesw5-dev \
 		libtool \
@@ -143,10 +146,16 @@ if [[ $INSTALL_NUTTX == "true" ]]; then
 		util-linux \
 		vim-common \
 		;
+	if [[ "${UBUNTU_RELEASE}" == "20.04" || "${UBUNTU_RELEASE}" == "22.04" ]]; then
+		sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
+		kconfig-frontends \
+		;
+	fi
+
 
 	if [ -n "$USER" ]; then
 		# add user to dialout group (serial port access)
-		usermod -a -G dialout $USER
+		sudo usermod -a -G dialout $USER
 	fi
 
 	# arm-none-eabi-gcc
@@ -165,7 +174,7 @@ if [[ $INSTALL_NUTTX == "true" ]]; then
 	else
 		echo "Installing arm-none-eabi-gcc-${NUTTX_GCC_VERSION}";
 		wget -O /tmp/gcc-arm-none-eabi-${NUTTX_GCC_VERSION}-linux.tar.bz2 https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-rm/${NUTTX_GCC_VERSION_SHORT}/gcc-arm-none-eabi-${NUTTX_GCC_VERSION}-${INSTALL_ARCH}-linux.tar.bz2 && \
-			tar -jxf /tmp/gcc-arm-none-eabi-${NUTTX_GCC_VERSION}-linux.tar.bz2 -C /opt/;
+			sudo tar -jxf /tmp/gcc-arm-none-eabi-${NUTTX_GCC_VERSION}-linux.tar.bz2 -C /opt/;
 
 		# add arm-none-eabi-gcc to user's PATH
 		exportline="export PATH=/opt/gcc-arm-none-eabi-${NUTTX_GCC_VERSION}/bin:\$PATH"
@@ -174,6 +183,7 @@ if [[ $INSTALL_NUTTX == "true" ]]; then
 			echo "${NUTTX_GCC_VERSION} path already set.";
 		else
 			echo $exportline >> $HOME/.profile;
+			source $HOME/.profile; # Allows to directly build NuttX targets in the same terminal
 		fi
 	fi
 fi
@@ -185,22 +195,21 @@ if [[ $INSTALL_SIM == "true" ]]; then
 	echo "Installing PX4 simulation dependencies"
 
 	# General simulation dependencies
-	DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
 		bc \
 		;
 
 	if [[ "${UBUNTU_RELEASE}" == "18.04" ]]; then
 		java_version=11
-		gazebo_version=9
 	elif [[ "${UBUNTU_RELEASE}" == "20.04" ]]; then
-		java_version=14
-		gazebo_version=11
+		java_version=13
+	elif [[ "${UBUNTU_RELEASE}" == "22.04" ]]; then
+		java_version=11
 	else
 		java_version=14
-		gazebo_version=11
 	fi
-	# Java (jmavsim or fastrtps)
-	DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
+	# Java (jmavsim)
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
 		ant \
 		openjdk-$java_version-jre \
 		openjdk-$java_version-jdk \
@@ -208,23 +217,45 @@ if [[ $INSTALL_SIM == "true" ]]; then
 		;
 
 	# Set Java 11 as default
-	update-alternatives --set java $(update-alternatives --list java | grep "java-$java_version")
+	sudo update-alternatives --set java $(update-alternatives --list java | grep "java-$java_version")
 
-	# Gazebo
-	sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
-	wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
-	# Update list, since new gazebo-stable.list has been added
-	apt-get update -y --quiet
-	DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
+	# Gazebo / Gazebo classic installation
+	if [[ "${UBUNTU_RELEASE}" == "22.04" ]]; then
+		echo "Gazebo (Garden) will be installed"
+		echo "Earlier versions will be removed"
+		# Add Gazebo binary repository
+		sudo wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+		echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+		sudo apt-get update -y --quiet
+
+		# Install Gazebo
+		gazebo_packages="gz-garden"
+	else
+		sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+		wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+		# Update list, since new gazebo-stable.list has been added
+		sudo apt-get update -y --quiet
+
+		# Install Gazebo classic
+		if [[ "${UBUNTU_RELEASE}" == "18.04" ]]; then
+			gazebo_classic_version=9
+			gazebo_packages="gazebo$gazebo_classic_version libgazebo$gazebo_classic_version-dev"
+		else
+			# default and Ubuntu 20.04
+			gazebo_classic_version=11
+			gazebo_packages="gazebo$gazebo_classic_version libgazebo$gazebo_classic_version-dev"
+		fi
+	fi
+
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
 		dmidecode \
-		gazebo$gazebo_version \
+		$gazebo_packages \
 		gstreamer1.0-plugins-bad \
 		gstreamer1.0-plugins-base \
 		gstreamer1.0-plugins-good \
 		gstreamer1.0-plugins-ugly \
 		gstreamer1.0-libav \
 		libeigen3-dev \
-		libgazebo$gazebo_version-dev \
 		libgstreamer-plugins-base1.0-dev \
 		libimage-exiftool-perl \
 		libopencv-dev \
@@ -233,10 +264,11 @@ if [[ $INSTALL_SIM == "true" ]]; then
 		protobuf-compiler \
 		;
 
-	if dmidecode -t system | grep -q "Manufacturer: VMware, Inc." ; then
+	if sudo dmidecode -t system | grep -q "Manufacturer: VMware, Inc." ; then
 		# fix VMWare 3D graphics acceleration for gazebo
 		echo "export SVGA_VGPU10=0" >> ~/.profile
 	fi
+
 fi
 
 if [[ $INSTALL_NUTTX == "true" ]]; then
