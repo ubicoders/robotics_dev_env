@@ -2,7 +2,7 @@ pip install --user -U empy pyros-genmsg setuptools
 
 git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
 cd Micro-XRCE-DDS-Agent
-git checkout v2.4.1
+git checkout v2.4.3
 mkdir build
 cd build
 cmake ..
