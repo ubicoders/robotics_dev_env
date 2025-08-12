@@ -141,3 +141,46 @@ services:
       stdin_open: true # docker run -i
       tty: true        # docker run -t    
       <<: *cuda-configuration    
+
+  ubicoders_u24_cuda12:
+    container_name: ubicoders_u24_cuda12_cnt
+    build: 
+      context: .
+      dockerfile: ./u22cuda1281_u24/Dockerfile
+    image: ubicoders/ubuntu:u24_cuda12
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t    
+    <<: *cuda-configuration
+
+
+
+  ubicoders_u24_cuda12_zed:
+    container_name: ubicoders_u24_cuda12_zed_cnt
+    # build: 
+    #   context: .
+    #   dockerfile: ./u22cuda1281_u24_zed/Dockerfile
+    # image: ubicoders/ubuntu:u24_cuda12_zed
+    image: stereolabs/zed:5.0-gl-devel-cuda12.8-ubuntu24.04
+    
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t    
+    <<: *cuda-configuration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
