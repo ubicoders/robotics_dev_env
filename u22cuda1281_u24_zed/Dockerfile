@@ -24,7 +24,8 @@ RUN . ${CONDA}/etc/profile.d/conda.sh \
  && conda activate zed \
  && python -V \
  && pip install --upgrade pip \
- && pip install numpy requests cython PyOpenGL opencv-python opencv-contrib-python
+ && pip install numpy requests cython pyopengl opencv-python opencv-contrib-python \
+ && conda install -c conda-forge libstdcxx-ng
 
 # installing zed sdk
 RUN apt install zstd -y
@@ -37,7 +38,9 @@ RUN . ${CONDA}/etc/profile.d/conda.sh \
  && conda activate zed \
  && python get_python_api.py
 
- WORKDIR /home/ubuntu
+
+
+WORKDIR /home/ubuntu
 
 
 # delete the installers
