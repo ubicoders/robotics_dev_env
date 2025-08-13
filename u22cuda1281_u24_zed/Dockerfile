@@ -2,8 +2,7 @@ FROM ubicoders/ubuntu:u24_cuda12
 
 # ZED opencv Prep
 RUN apt-get update && apt-get upgrade -y
-RUN apt-get install ffmpeg libsm6 libxext6  -y
-RUN apt install libjpeg-turbo8 libturbojpeg libusb-1.0-0 libusb-1.0-0-dev libopenblas-dev libarchive-dev libv4l-0 curl unzip zlib1g mesa-utils libpng-dev python3-dev python3-pip python3-setuptools libglew-dev freeglut3-dev qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libqt5opengl5 libqt5svg5 -y
+RUN apt-get install ffmpeg libsm6 libxext6 libjpeg-turbo8 libturbojpeg libusb-1.0-0 libusb-1.0-0-dev libopenblas-dev libarchive-dev libv4l-0 curl unzip zlib1g mesa-utils libpng-dev python3-dev python3-pip python3-setuptools libglew-dev freeglut3-dev qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libqt5opengl5 libqt5svg5 -y
 
 
 SHELL ["/bin/bash","-lc"]
