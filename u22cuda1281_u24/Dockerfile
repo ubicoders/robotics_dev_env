@@ -62,7 +62,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 # If you actually need Java, pick a supported version:
-# RUN apt-get update && apt-get install -y --no-install-recommends openjdk-17-jdk-headless && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openjdk-17-jdk-headless && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y locales
+RUN echo "en_US.UTF-8 UTF-8" | tee -a /etc/locale.gen
+RUN locale-gen
+RUN update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+# new shell (or)
+RUN exec bash -l
+
 
 # Requirements
 WORKDIR /home/
