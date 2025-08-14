@@ -154,8 +154,6 @@ services:
     tty: true        # docker run -t    
     <<: *cuda-configuration
 
-
-
   ubicoders_u24_cuda12_zed:
     container_name: ubicoders_u24_cuda12_zed_cnt
     build: 
