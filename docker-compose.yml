@@ -142,6 +142,19 @@ services:
       tty: true        # docker run -t    
       <<: *cuda-configuration    
 
+  ubicoders_u18_cuda10_zed:
+    container_name: ubicoders_u18_cuda10_zed_cnt
+    build: 
+      context: .
+      dockerfile: ./u18cuda10zed/Dockerfile
+    image: ubicoders/ubuntu:u18_cuda10_zed
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t    
+    <<: *cuda-configuration
+
+
   ubicoders_u24_cuda12:
     container_name: ubicoders_u24_cuda12_cnt
     build: 
