@@ -122,7 +122,7 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
 
 
 # Install OpenCV
-ENV OCV_VERSION_PY=3.4.18.65
+ENV OCV_VERSION_PY=4.8.0.74
 ENV OCV_VERSION_CPP=4.12.0
 
 
