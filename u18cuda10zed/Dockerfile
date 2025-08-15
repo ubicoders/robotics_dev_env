@@ -136,6 +136,7 @@ RUN . ${CONDA}/etc/profile.d/conda.sh \
  && conda activate zed \
  && python -V \
  && pip install --upgrade pip \
+ && pip uninstall numpy -y \
  && pip install numpy==1.26.4 requests cython==3.0.11 pyopengl==3.1.1a1 requests opencv-python==${OCV_VERSION_PY} opencv-contrib-python==${OCV_VERSION_PY} \
  && conda install -c conda-forge libstdcxx-ng
 
