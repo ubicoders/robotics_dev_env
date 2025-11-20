@@ -18,8 +18,8 @@ docker compose build ubicoders_ros2_humble_cuda12_ocv_zed
 docker push ubicoders/ros2:jazzy
 docker push ubicoders/ros2:jazzy_px4
 docker push ubicoders/ros2:jazzy_px4_uxrcedds
-docker push ubicoders/ros2:jazzy_cuda12_ocv
-docker push ubicoders/ros2:jazzy_cuda12_ocv_zed
+# docker push ubicoders/ros2:jazzy_cuda12_ocv
+# docker push ubicoders/ros2:jazzy_cuda12_ocv_zed
 docker push ubicoders/ubuntu:u24_cuda12
 docker push ubicoders/ubuntu:u24_cuda12_zed
 

@@ -27,7 +27,7 @@ pyros-genmsg
 jsonschema
 pyserial
 pymavlink
-empy
+empy==3.3.4
 argcomplete 
 flake8-blind-except 
 flake8-builtins 

@@ -1,7 +1,25 @@
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04
-
+RUN apt-get update && apt-get upgrade -y
+RUN echo "alias python=python3" >> /root/.bashrc
+# --------------------
+# Locale / base setup
+# --------------------
 ENV DEBIAN_FRONTEND=noninteractive TZ=UTC
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && echo "$TZ" > /etc/timezone
+# --------------------
+# Install locales
+# --------------------
+RUN apt-get update && apt-get install -y \
+    locales \
+    lsb-release \
+    gnupg2 \
+    curl \
+    software-properties-common \
+    && locale-gen en_US en_US.UTF-8 \
+    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US./robot_ws/srcUTF-8
+
 
 # Base deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -72,11 +90,6 @@ RUN update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 RUN exec bash -l
 
 
-# Requirements
-WORKDIR /home/
-
-
-
 # --------------------
 # Miniconda (non-interactive)
 # --------------------
@@ -94,15 +107,19 @@ RUN conda --version && \
 RUN conda config --set changeps1 True
 RUN /miniconda/bin/conda init bash
 
-
 # --------------------
 # Python Dependencies via Miniconda Pip
 # --------------------
+COPY requirements.txt /tmp/requirements.txt
+RUN pip uninstall empy -y
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
-    rm /tmp/requirements.txt
+rm /tmp/requirements.txt
+
 
 # --------------------
-# Cleanup
+# Default workspace
 # --------------------
-RUN rm -rf /home/ubuntu/user || true
+RUN mkdir -p /home/ubuntu
+WORKDIR /home/ubuntu/
+
 

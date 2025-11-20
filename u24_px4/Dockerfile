@@ -1,9 +1,27 @@
 FROM ubuntu:24.04
+RUN apt-get update && apt-get upgrade -y
+RUN rm -rf /home/ubuntu/user || true
+RUN mkdir -p /home/ubuntu
 
 # --------------------
-# Base Configuration
+# Locale / base setup
 # --------------------
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive TZ=UTC
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && echo "$TZ" > /etc/timezone
+
+# --------------------
+# Install locales
+# --------------------
+RUN apt-get update && apt-get install -y \
+    locales \
+    lsb-release \
+    gnupg2 \
+    curl \
+    software-properties-common \
+    && locale-gen en_US en_US.UTF-8 \
+    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
 
 # --------------------
 # System Packages
@@ -85,18 +103,9 @@ RUN chmod +x /tmp/install_px4.bash && \
     /tmp/install_px4.bash && \
     rm /tmp/install_px4.bash
 
-
 # ARM GCC toolchain path
 ENV PATH=/opt/gcc-arm-none-eabi-9-2020-q2-update/bin:${PATH}
 
-# --------------------
-# Workspace & Scripts
-# --------------------
-WORKDIR /home/ubuntu
-RUN mkdir -p /home/ubuntu
-
-COPY download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash
-COPY requirements.txt /tmp/requirements.txt
 
 # --------------------
 # Miniconda (non-interactive)
@@ -120,11 +129,15 @@ RUN pip install empy==3.3.4 jsonschema pyserial
 # --------------------
 # Python Dependencies via Miniconda Pip
 # --------------------
+COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
     rm /tmp/requirements.txt
 
-# --------------------
-# Cleanup
-# --------------------
-RUN rm -rf /home/ubuntu/user || true
 
+# --------------------
+# Workspace & Scripts
+# --------------------
+WORKDIR /home/ubuntu
+RUN mkdir -p /home/ubuntu
+
+COPY download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash
