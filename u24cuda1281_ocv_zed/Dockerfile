@@ -26,7 +26,7 @@ RUN apt-get update \
 
  
 SHELL ["/bin/bash","-lc"]
-ENV CONDA=/home/miniconda
+ENV CONDA=/miniconda
 ENV PATH=${CONDA}/bin:${PATH}
 
 # Accept ToS for Anaconda channels (idempotent)
