@@ -1,4 +1,4 @@
-FROM ubicoders/ros2:humble_px4
+FROM ubicoders/ros2:jazzy_px4
 RUN apt update && apt upgrade -y
 
 COPY install_uxrce.bash /home/ubuntu/install_uxrce.bash

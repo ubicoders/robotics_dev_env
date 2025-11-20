@@ -76,17 +76,33 @@ RUN exec bash -l
 WORKDIR /home/
 
 
-# # --- Miniconda (non-interactive, robust) ---
-RUN curl -LO http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-RUN bash Miniconda3-latest-Linux-x86_64.sh -p /home/miniconda -b
-RUN /home/miniconda/bin/activate
-ENV PATH="/home/miniconda/bin:${PATH}"
-RUN conda init --all
-RUN conda config --set auto_activate_base true
 
-RUN rm -rf /home/ubuntu/user
-WORKDIR /home/ubuntu
+# --------------------
+# Miniconda (non-interactive)
+# --------------------
+ENV CONDA_DIR=/miniconda
+ENV PATH=${CONDA_DIR}/bin:${PATH}
+
+RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh && \
+    bash /tmp/miniconda.sh -b -p ${CONDA_DIR} && \
+    rm /tmp/miniconda.sh
+
+RUN conda --version && \
+    conda config --set always_yes yes --set changeps1 no && \
+    conda clean -afy || true
+
+RUN conda config --set changeps1 True
+RUN /miniconda/bin/conda init bash
 
 
+# --------------------
+# Python Dependencies via Miniconda Pip
+# --------------------
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
+    rm /tmp/requirements.txt
 
+# --------------------
+# Cleanup
+# --------------------
+RUN rm -rf /home/ubuntu/user || true
 

@@ -1,15 +1,17 @@
-FROM ubicoders/ros2:jazzy
-RUN apt update && apt upgrade -y
+FROM osrf/ros:jazzy-desktop-full-noble
 
 # --------------------
-# Base Configuration
+# Base configuration
 # --------------------
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # --------------------
-# System Packages
+# System packages
 # --------------------
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get -y --quiet --no-install-recommends install \
       apt-utils \
       autoconf \
@@ -56,10 +58,10 @@ RUN apt-get update && \
       picocom \
       minicom \
       screen \
-      sudo \
       pkg-config \
       python3-dev \
       python3-pip \
+      python3-tk \
       rsync \
       software-properties-common \
       shellcheck \
@@ -77,34 +79,58 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # --------------------
-# PX4 Dependencies & Toolchain
+# ROS 2 extras (rosdep, DDS deps already covered)
 # --------------------
-COPY requirements.txt /tmp/requirements.txt
-COPY install_px4.bash /tmp/install_px4.bash
-
-RUN chmod +x /tmp/install_px4.bash && \
-    /tmp/install_px4.bash && \
-    rm /tmp/install_px4.bash
-
-
-# ARM GCC toolchain path
-ENV PATH=/opt/gcc-arm-none-eabi-9-2020-q2-update/bin:${PATH}
+RUN rosdep update
 
 # --------------------
-# Workspace & Scripts
+# Default workspace
 # --------------------
-WORKDIR /home/ubuntu
-RUN mkdir -p /home/ubuntu
+RUN mkdir -p /home/ubuntu/robot_ws/src
 
-COPY download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash
-COPY requirements.txt /tmp/requirements.txt
+# --------------------
+# Miniconda (non-interactive)
+# --------------------
+ENV CONDA_DIR=/miniconda
+ENV PATH=${CONDA_DIR}/bin:${PATH}
+
+RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh && \
+    bash /tmp/miniconda.sh -b -p ${CONDA_DIR} && \
+    rm /tmp/miniconda.sh
+
+RUN conda --version && \
+    conda config --set always_yes yes --set changeps1 no && \
+    conda clean -afy || true
+
+RUN conda config --set changeps1 True
+RUN /miniconda/bin/conda init bash
 
 # --------------------
 # Python Dependencies via Miniconda Pip
 # --------------------
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt && \
     rm /tmp/requirements.txt
-RUN pip uninstall empy -y
-RUN pip install empy==3.3.4
+# --------------------
+# Python dev / lint / test tools
+# --------------------
+RUN pip install \
+      argcomplete \
+      flake8-blind-except \
+      flake8-builtins \
+      flake8-class-newline \
+      flake8-comprehensions \
+      flake8-deprecated \
+      flake8-docstrings \
+      flake8-import-order \
+      flake8-quotes \
+      pytest-repeat \
+      pytest-rerunfailures \
+      pytest
 
+
+# --------------------
+# Cleanup
+# --------------------
+RUN rm -rf /home/ubuntu/user || true
 
