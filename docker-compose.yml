@@ -82,20 +82,6 @@ services:
     depends_on:
       - ubicoders_ros2_jazzy_px4
     <<: *default-configuration
-# # ==========================================
-# # Ubuntu 24 + ROS2 Jazzy + CUDA 12
-# # ==========================================  
-#   ubicoders_ros2_jazzy_cuda12:
-#     container_name: ubicoders_ros2_jazzy_cuda12_cnt
-#     build: 
-#       context: .
-#       dockerfile: ./u24cuda_ros2jazzy/Dockerfile
-#     image: ubicoders/ros2:jazzy_cuda12
-#     network_mode: host
-#     privileged: true
-#     stdin_open: true # docker run -i
-#     tty: true        # docker run -t    
-#     <<: *cuda-configuration    
 
 # ==========================================
 # Ubuntu 24 + CUDA 12 - NO ROS2
@@ -112,16 +98,33 @@ services:
     tty: true        # docker run -t    
     <<: *cuda-configuration
 
-  ubicoders_u24_cuda12_zed:
-    container_name: ubicoders_u24_cuda12_zed_cnt
+  ubicoders_u24_cuda12_ocv_zed:
+    container_name: ubicoders_u24_cuda12_ocv_zed_cnt
     build: 
       context: .
-      dockerfile: ./u22cuda1281_u24_zed/Dockerfile
-    image: ubicoders/ubuntu:u24_cuda12_zed
+      dockerfile: ./u24cuda1281_ocv_zed/Dockerfile
+    image: ubicoders/ubuntu:u24_cuda12_ocv_zed
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
+    depends_on:
+    - ubicoders_u24_cuda12
     tty: true        # docker run -t    
     <<: *cuda-configuration
 
-
+# ==========================================
+# Ubuntu 24 + CUDA 12 + ROS2 Jazzy
+# ==========================================  
+  ubicoders_u24_cuda12_jazzy:
+    container_name: ubicoders_u24_cuda12_jazzy_cnt
+    build: 
+      context: .
+      dockerfile: ./u24cuda1281_jazzy/Dockerfile
+    image: ubicoders/ros2:jazzy_cuda12
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    depends_on:
+    - ubicoders_u24_cuda12
+    tty: true        # docker run -t    
+    <<: *cuda-configuration    

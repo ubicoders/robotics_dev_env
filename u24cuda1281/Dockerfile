@@ -21,74 +21,77 @@ RUN apt-get update && apt-get install -y \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US./robot_ws/srcUTF-8
 
 
-# Base deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    apt-utils \
-    ca-certificates \
-    software-properties-common \
-    build-essential \
-    cmake \
-    ninja-build \
-    pkg-config \
-    curl \
-    wget \
-    git \
-    gnupg \
-    # C/C++ & utils
-    g++ \
-    gcc \
-    gdb \
-    ccache \
-    cppcheck \
-    lcov \
-    file \
-    autoconf \
-    automake \
-    bison \
-    flex \
-    libtool \
-    # libs
-    libncurses-dev \
-    libcunit1-dev \
-    libfreetype6-dev \
-    libgtest-dev \
-    libpng-dev \
-    libssl-dev \
-    libasio-dev \
-    libtinyxml2-dev \
-    # X/GL runtime
-    libgl1 \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    # net & misc
-    net-tools \
-    openssh-client \
-    picocom \
-    minicom \
-    screen \
-    nano \
-    dmidecode \
-    dirmngr \
-    doxygen \
-    lsb-release \
-    # Python from Ubuntu
-    python3 \
-    python3-pip \
-    python3-dev \
- && rm -rf /var/lib/apt/lists/*
+# --------------------
+# System packages
+# --------------------
+RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
+  apt-utils \
+  autoconf \
+  automake \
+  bison \
+  bzip2 \
+  build-essential \
+  ca-certificates \
+  ccache \
+  cmake \
+  cppcheck \
+  curl \
+  dmidecode \
+  dirmngr \
+  doxygen \
+  file \
+  flex \
+  g++ \
+  genromfs \
+  gcc \
+  gdb \
+  git \
+  gnupg2 \
+  gosu \
+  gperf \
+  lcov \
+  libncurses-dev \
+  libcunit1-dev \
+  libfreetype6-dev \
+  libgtest-dev \
+  libpng-dev \
+  libssl-dev \
+  libasio-dev \
+  libtinyxml2-dev \
+  libtool \
+  lsb-release \
+  net-tools \
+  make \
+  nano \
+  ninja-build \
+  openjdk-8-jdk \
+  openjdk-8-jre \
+  openssh-client \
+  picocom \
+  minicom \
+  screen \
+  pkg-config \
+  python3-dev \
+  python3-pip \
+  python3-tk \
+  rsync \
+  software-properties-common \
+  shellcheck \
+  tzdata \
+  tree \
+  uncrustify \
+  unzip \
+  valgrind \
+  vim-common \
+  wget \
+  xsltproc \
+  zip \
+  && apt-get -y autoremove \
+  && apt-get clean autoclean \
+  && rm -rf /var/lib/apt/lists/*
 
 # If you actually need Java, pick a supported version:
 RUN apt-get update && apt-get install -y --no-install-recommends openjdk-17-jdk-headless && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y locales
-RUN echo "en_US.UTF-8 UTF-8" | tee -a /etc/locale.gen
-RUN locale-gen
-RUN update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-# new shell (or)
-RUN exec bash -l
-
 
 # --------------------
 # Miniconda (non-interactive)
@@ -119,6 +122,7 @@ rm /tmp/requirements.txt
 # --------------------
 # Default workspace
 # --------------------
+RUN rm -rf /home/ubuntu/user
 RUN mkdir -p /home/ubuntu
 WORKDIR /home/ubuntu/
 
