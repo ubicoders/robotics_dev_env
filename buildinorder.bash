@@ -10,6 +10,7 @@ docker compose build ubicoders_ros2_jazzy_px4uxrcedds
 docker compose build ubicoders_ros2_iox2_zenoh_ocv
 docker compose build ubicoders_ros2_jazzy_svo
 docker compose build ubicoders_ros2_jazzy_vrobots
+docker compose build ubicoders_ros2_jazzy_svo_vrobots
 
 
 # CUDA based ubuntu ========================================
@@ -27,6 +28,10 @@ docker push ubicoders/ros2:jazzy
 docker push ubicoders/ros2:jazzy_px4
 docker push ubicoders/ros2:jazzy_px4_uxrcedds
 docker push ubicoders/ros2:jazzy_cuda12
+docker push ubicoders/ros2:iox2_zenoh_ocv
+docker push ubicoders/ros2:jazzy_svo
+docker push ubicoders/ros2:jazzy_vrobots
+docker push ubicoders/ros2:jazzy_svo_vrobots
 
 docker push ubicoders/ubuntu:u24_cuda12
 docker push ubicoders/ubuntu:u24_cuda12_ocv_zed

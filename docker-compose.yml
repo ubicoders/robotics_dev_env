@@ -80,6 +80,19 @@ services:
     tty: true        # docker run -t
     <<: *default-configuration    
 
+  ubicoders_ros2_jazzy_svo_vrobots:
+    container_name: ubicoders_ros2_jazzy_svo_vrobots_cnt
+    build:
+      context: .
+      dockerfile: ./ros2svo_vrobots/Dockerfile
+    image: ubicoders/ros2:jazzy_svo_vrobots
+    network_mode: host
+    privileged: true
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    <<: *default-configuration    
+
+
   ubicoders_ros2_jazzy_px4:
     container_name: ubicoders_ros2_jazzy_px4_cnt
     build: 
