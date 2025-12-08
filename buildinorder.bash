@@ -7,6 +7,10 @@ docker compose build ubicoders_u24_px4
 docker compose build ubicoders_ros2_jazzy
 docker compose build ubicoders_ros2_jazzy_px4
 docker compose build ubicoders_ros2_jazzy_px4uxrcedds
+docker compose build ubicoders_ros2_iox2_zenoh_ocv
+docker compose build ubicoders_ros2_jazzy_svo
+docker compose build ubicoders_ros2_jazzy_vrobots
+
 
 # CUDA based ubuntu ========================================
 docker compose build ubicoders_u24_cuda12
