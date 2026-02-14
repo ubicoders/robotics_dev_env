@@ -1,5 +1,7 @@
 FROM ubicoders/ros2:jazzy
 
+USER root
+
 RUN apt-get update && apt-get install -y libacl1-dev clang-14 libclang-14-dev llvm-14-dev pkg-config cmake build-essential curl vulkan-tools libvulkan1 libvulkan-dev vulkan-utility-libraries-dev spirv-tools
 
 # Install Rust and Cargo
@@ -45,6 +47,3 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build -j $(nproc)
 RUN cmake --install build
 
-WORKDIR /home/ubuntu
-COPY use_conda.bash /home/ubuntu/use_conda.bash
-COPY use_system_python.bash /home/ubuntu/use_system_python.bash

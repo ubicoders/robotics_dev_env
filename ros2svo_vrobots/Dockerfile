@@ -45,6 +45,10 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build -j $(nproc)
 RUN cmake --install build
 
+COPY ./ros2svo_vrobots/requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
+
 WORKDIR /home/ubuntu
 COPY use_conda.bash /home/ubuntu/use_conda.bash
 COPY use_system_python.bash /home/ubuntu/use_system_python.bash
+RUN chmod +x /home/ubuntu/use_system_python.bash /home/ubuntu/use_system_python.bash
