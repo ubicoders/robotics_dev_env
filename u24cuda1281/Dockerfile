@@ -1,4 +1,8 @@
-FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04
+# Versions come from .env via docker-compose build args.
+ARG CUDA_VERSION
+ARG UBUNTU_VERSION
+FROM nvidia/cuda:${CUDA_VERSION}-cudnn-devel-ubuntu${UBUNTU_VERSION}
+ARG EMPY_VERSION
 RUN apt-get update && apt-get upgrade -y
 RUN echo "alias python=python3" >> /root/.bashrc
 # --------------------
@@ -18,7 +22,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     software-properties-common \
     && locale-gen en_US en_US.UTF-8 \
-    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US./robot_ws/srcUTF-8
+    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
 
 
 # --------------------
@@ -99,7 +103,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends openjdk-17-jdk-
 ENV CONDA_DIR=/miniconda
 ENV PATH=${CONDA_DIR}/bin:${PATH}
 
-RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh && \
+# Installer is pinned in .env: Miniconda3-latest floats to a new Python and breaks wheels.
+ARG MINICONDA_INSTALLER
+RUN curl -fsSL "https://repo.anaconda.com/miniconda/${MINICONDA_INSTALLER}" -o /tmp/miniconda.sh && \
     bash /tmp/miniconda.sh -b -p ${CONDA_DIR} && \
     rm /tmp/miniconda.sh
 
@@ -114,9 +120,9 @@ RUN /miniconda/bin/conda init bash
 # Python Dependencies via Miniconda Pip
 # --------------------
 COPY requirements.txt /tmp/requirements.txt
-RUN pip uninstall empy -y
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
 rm /tmp/requirements.txt
+RUN pip install --no-cache-dir "empy==${EMPY_VERSION}"
 
 
 # --------------------

@@ -1,4 +1,6 @@
-FROM ubicoders/ros2:jazzy
+# Versions come from .env via docker-compose build args.
+ARG ROS_DISTRO
+FROM ubicoders/ros2:${ROS_DISTRO}
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 

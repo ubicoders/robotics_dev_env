@@ -1,9 +1,11 @@
 FROM ubicoders/ubuntu:u24_cuda12
+# Versions come from .env via docker-compose build args.
+ARG ROS_DISTRO
 RUN apt-get update && apt-get upgrade -y
 
 # --------------------
-# Environment variables for ROS 2 Jazzy
-ENV ROS_DISTRO=jazzy
+# Environment variables for ROS 2
+ENV ROS_DISTRO=${ROS_DISTRO}
 ENV DEBIAN_FRONTEND=noninteractive
 # Enable universe (recommended by ROS)
 RUN add-apt-repository universe
@@ -19,7 +21,7 @@ RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
 
 # Install ROS 2 Jazzy desktop-full (same variant as osrf/ros:jazzy-desktop-full-noble)
 RUN apt-get install -y \
-    ros-jazzy-desktop-full \
+    ros-${ROS_DISTRO}-desktop-full \
     ros-dev-tools \
     python3-pip \
     python3-colcon-common-extensions \
@@ -27,18 +29,18 @@ RUN apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Always source ROS 2 Jazzy in root bashrc (as requested)
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /root/.bashrc
 
 # --------------------
 # ROS visualization / URDF helpers
 # (desktop-full already brings many of these, but keeping explicit)
 # --------------------
 RUN apt-get update && apt-get install -y \
-    ros-jazzy-robot-state-publisher \
-    ros-jazzy-joint-state-publisher-gui \
-    ros-jazzy-xacro \
-    ros-jazzy-tf2-tools \
-    ros-jazzy-rqt-tf-tree \
+    ros-${ROS_DISTRO}-robot-state-publisher \
+    ros-${ROS_DISTRO}-joint-state-publisher-gui \
+    ros-${ROS_DISTRO}-xacro \
+    ros-${ROS_DISTRO}-tf2-tools \
+    ros-${ROS_DISTRO}-rqt-tf-tree \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --------------------
@@ -47,16 +49,16 @@ RUN apt-get update && apt-get install -y \
 # keeps bridge/sim explicit to mirror your previous image.
 # --------------------
 RUN apt-get update && apt-get install -y \
-    ros-jazzy-ros-gz \
-    ros-jazzy-ros-gz-sim \
+    ros-${ROS_DISTRO}-ros-gz \
+    ros-${ROS_DISTRO}-ros-gz-sim \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --------------------
 # ros2_control core packages (control framework & controllers)
 # --------------------
 RUN apt-get update && apt-get install -y \
-    ros-jazzy-ros2-control \
-    ros-jazzy-ros2-controllers \
+    ros-${ROS_DISTRO}-ros2-control \
+    ros-${ROS_DISTRO}-ros2-controllers \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --------------------

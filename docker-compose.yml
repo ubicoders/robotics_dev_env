@@ -1,7 +1,9 @@
+# All versions (${...}) are defined in .env, which docker compose reads automatically.
+
 x-common-configuration: &default-configuration
   environment:
     - DISPLAY
-    - QT_X11_NO_MITSHM=1 
+    - QT_X11_NO_MITSHM=1
   volumes:
     - "/tmp/.X11-unix/:/tmp/.X11-unix/:rw"
     - "$HOME/.Xauthority:/root/.Xauthority:rw"
@@ -11,7 +13,7 @@ x-cuda-configuration: &cuda-configuration
   runtime: nvidia
   environment:
     - DISPLAY
-    - QT_X11_NO_MITSHM=1 
+    - QT_X11_NO_MITSHM=1
   volumes:
     - "/tmp/.X11-unix/:/tmp/.X11-unix/:rw"
     - "$HOME/.Xauthority:/root/.Xauthority:rw"
@@ -26,14 +28,19 @@ x-cuda-configuration: &cuda-configuration
 
 services:
 # ==========================================
-# Ubuntu 24 + PX4
+# Ubuntu 24 + PX4 toolchain
 # ==========================================
   ubicoders_u24_px4:
     container_name: ubicoders_u24_px4_cnt
     build:
       context: .
       dockerfile: ./u24_px4/Dockerfile
-    image: ubicoders/px4:v1.16
+      args:
+        UBUNTU_VERSION: ${UBUNTU_VERSION}
+        PX4_TOOLCHAIN_VERSION: ${PX4_TOOLCHAIN_VERSION}
+        MINICONDA_INSTALLER: ${MINICONDA_INSTALLER}
+        EMPY_VERSION: ${EMPY_VERSION}
+    image: ubicoders/px4:${PX4_TOOLCHAIN_VERSION}
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
@@ -41,14 +48,19 @@ services:
     <<: *default-configuration
 
 # ==========================================
-# Ubuntu 24 + ROS2 Jazzy
+# Ubuntu 24 + ROS2
 # ==========================================
   ubicoders_ros2_jazzy:
     container_name: ubicoders_ros2_jazzy_cnt
     build:
       context: .
       dockerfile: ./ros2jazzy/Dockerfile
-    image: ubicoders/ros2:jazzy
+      args:
+        ROS_DISTRO: ${ROS_DISTRO}
+        UBUNTU_CODENAME: ${UBUNTU_CODENAME}
+        MINICONDA_INSTALLER: ${MINICONDA_INSTALLER}
+        EMPY_VERSION: ${EMPY_VERSION}
+    image: ubicoders/ros2:${ROS_DISTRO}
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
@@ -60,12 +72,14 @@ services:
     build:
       context: .
       dockerfile: ./ros2svo/Dockerfile
-    image: ubicoders/ros2:jazzy_svo
+      args:
+        ROS_DISTRO: ${ROS_DISTRO}
+    image: ubicoders/ros2:${ROS_DISTRO}_svo
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
     tty: true        # docker run -t
-    <<: *default-configuration    
+    <<: *default-configuration
 
 
   ubicoders_ros2_jazzy_vrobots:
@@ -73,96 +87,127 @@ services:
     build:
       context: .
       dockerfile: ./ros2vrobots/Dockerfile
-    image: ubicoders/ros2:jazzy_vrobots
+      args:
+        ROS_DISTRO: ${ROS_DISTRO}
+        RUST_TOOLCHAIN: ${RUST_TOOLCHAIN}
+        FLATBUFFERS_VERSION: ${FLATBUFFERS_VERSION}
+        ICEORYX2_VERSION: ${ICEORYX2_VERSION}
+    image: ubicoders/ros2:${ROS_DISTRO}_vrobots
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
     tty: true        # docker run -t
-    <<: *default-configuration    
+    <<: *default-configuration
 
   ubicoders_ros2_jazzy_svo_vrobots:
     container_name: ubicoders_ros2_jazzy_svo_vrobots_cnt
     build:
       context: .
       dockerfile: ./ros2svo_vrobots/Dockerfile
-    image: ubicoders/ros2:jazzy_svo_vrobots
+      args:
+        ROS_DISTRO: ${ROS_DISTRO}
+        RUST_TOOLCHAIN: ${RUST_TOOLCHAIN}
+        FLATBUFFERS_VERSION: ${FLATBUFFERS_VERSION}
+        ICEORYX2_VERSION: ${ICEORYX2_VERSION}
+    image: ubicoders/ros2:${ROS_DISTRO}_svo_vrobots
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
     tty: true        # docker run -t
-    <<: *default-configuration    
+    <<: *default-configuration
 
 
   ubicoders_ros2_jazzy_px4:
     container_name: ubicoders_ros2_jazzy_px4_cnt
-    build: 
+    build:
       context: .
       dockerfile: ./ros2px4/Dockerfile
-    image: ubicoders/ros2:jazzy_px4
+      args:
+        ROS_DISTRO: ${ROS_DISTRO}
+        PX4_TOOLCHAIN_VERSION: ${PX4_TOOLCHAIN_VERSION}
+        PX4_MSGS_VERSION: ${PX4_MSGS_VERSION}
+        EMPY_VERSION: ${EMPY_VERSION}
+    image: ubicoders/ros2:${ROS_DISTRO}_px4
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
-    tty: true        # docker run -t    
+    tty: true        # docker run -t
     depends_on:
       - ubicoders_ros2_jazzy
     <<: *default-configuration
-  
+
   ubicoders_ros2_jazzy_px4uxrcedds:
     container_name: ubicoders_ros2_jazzy_px4_uxrcedds_cnt
-    build: 
+    build:
       context: .
       dockerfile: ./ros2px4uxrcedds/Dockerfile
-    image: ubicoders/ros2:jazzy_px4_uxrcedds
+      args:
+        ROS_DISTRO: ${ROS_DISTRO}
+        UXRCE_DDS_AGENT_VERSION: ${UXRCE_DDS_AGENT_VERSION}
+        EMPY_VERSION: ${EMPY_VERSION}
+    image: ubicoders/ros2:${ROS_DISTRO}_px4_uxrcedds
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
-    tty: true        # docker run -t    
+    tty: true        # docker run -t
     depends_on:
       - ubicoders_ros2_jazzy_px4
     <<: *default-configuration
 
 # ==========================================
 # Ubuntu 24 + CUDA 12 - NO ROS2
-# ==========================================  
+# ==========================================
   ubicoders_u24_cuda12:
     container_name: ubicoders_u24_cuda12_cnt
-    build: 
+    build:
       context: .
       dockerfile: ./u24cuda1281/Dockerfile
+      args:
+        CUDA_VERSION: ${CUDA_VERSION}
+        UBUNTU_VERSION: ${UBUNTU_VERSION}
+        MINICONDA_INSTALLER: ${MINICONDA_INSTALLER}
+        EMPY_VERSION: ${EMPY_VERSION}
     image: ubicoders/ubuntu:u24_cuda12
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
-    tty: true        # docker run -t    
+    tty: true        # docker run -t
     <<: *cuda-configuration
 
   ubicoders_u24_cuda12_ocv_zed:
     container_name: ubicoders_u24_cuda12_ocv_zed_cnt
-    build: 
+    build:
       context: .
       dockerfile: ./u24cuda1281_ocv_zed/Dockerfile
+      args:
+        OPENCV_VERSION: ${OPENCV_VERSION}
+        OPENCV_PYTHON_VERSION: ${OPENCV_PYTHON_VERSION}
+        ZED_PYTHON_VERSION: ${ZED_PYTHON_VERSION}
+        ZED_SDK_INSTALLER: ${ZED_SDK_INSTALLER}
     image: ubicoders/ubuntu:u24_cuda12_ocv_zed
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
     depends_on:
     - ubicoders_u24_cuda12
-    tty: true        # docker run -t    
+    tty: true        # docker run -t
     <<: *cuda-configuration
 
 # ==========================================
-# Ubuntu 24 + CUDA 12 + ROS2 Jazzy
-# ==========================================  
+# Ubuntu 24 + CUDA 12 + ROS2
+# ==========================================
   ubicoders_u24_cuda12_jazzy:
     container_name: ubicoders_u24_cuda12_jazzy_cnt
-    build: 
+    build:
       context: .
       dockerfile: ./u24cuda1281_jazzy/Dockerfile
-    image: ubicoders/ros2:jazzy_cuda12
+      args:
+        ROS_DISTRO: ${ROS_DISTRO}
+    image: ubicoders/ros2:${ROS_DISTRO}_cuda12
     network_mode: host
     privileged: true
     stdin_open: true # docker run -i
     depends_on:
     - ubicoders_u24_cuda12
-    tty: true        # docker run -t    
-    <<: *cuda-configuration    
+    tty: true        # docker run -t
+    <<: *cuda-configuration

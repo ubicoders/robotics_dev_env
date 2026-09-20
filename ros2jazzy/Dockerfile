@@ -1,6 +1,11 @@
-FROM osrf/ros:jazzy-desktop-full-noble
+# Versions come from .env via docker-compose build args.
+ARG ROS_DISTRO
+ARG UBUNTU_CODENAME
+FROM osrf/ros:${ROS_DISTRO}-desktop-full-${UBUNTU_CODENAME}
+ARG EMPY_VERSION
 RUN apt update && apt upgrade -y
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
+# ROS_DISTRO is set as an environment variable by the base image.
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /root/.bashrc
 RUN echo "alias python=python3" >> /root/.bashrc
 
 # --------------------
@@ -105,7 +110,9 @@ RUN rosdep update
 ENV CONDA_DIR=/miniconda
 ENV PATH=${CONDA_DIR}/bin:${PATH}
 
-RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh && \
+# Installer is pinned in .env: Miniconda3-latest floats to a new Python and breaks wheels.
+ARG MINICONDA_INSTALLER
+RUN curl -fsSL "https://repo.anaconda.com/miniconda/${MINICONDA_INSTALLER}" -o /tmp/miniconda.sh && \
     bash /tmp/miniconda.sh -b -p ${CONDA_DIR} && \
     rm /tmp/miniconda.sh
 
@@ -120,9 +127,9 @@ RUN /miniconda/bin/conda init bash
 # Python Dependencies via Miniconda Pip
 # --------------------
 COPY requirements.txt /tmp/requirements.txt
-RUN pip uninstall empy -y
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
 rm /tmp/requirements.txt
+RUN pip install --no-cache-dir "empy==${EMPY_VERSION}"
 
 # --------------------
 # Default workspace

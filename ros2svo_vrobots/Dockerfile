@@ -1,9 +1,14 @@
-FROM ubicoders/ros2:jazzy_svo
+# Versions come from .env via docker-compose build args.
+ARG ROS_DISTRO
+FROM ubicoders/ros2:${ROS_DISTRO}_svo
+ARG RUST_TOOLCHAIN
+ARG FLATBUFFERS_VERSION
+ARG ICEORYX2_VERSION
 
 RUN apt-get update && apt-get install -y libacl1-dev clang-14 libclang-14-dev llvm-14-dev pkg-config cmake build-essential curl vulkan-tools libvulkan1 libvulkan-dev vulkan-utility-libraries-dev spirv-tools
 
 # Install Rust and Cargo
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain "${RUST_TOOLCHAIN}"
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # install zenoh-c
@@ -29,9 +34,9 @@ RUN cmake --build build -j $(nproc)
 RUN cmake --install build
 
 # install iceoryx 2 c++
-RUN git clone https://github.com/ubicoders/iceoryx2 /tmp/iceoryx2
+RUN git clone https://github.com/eclipse-iceoryx/iceoryx2.git /tmp/iceoryx2
 WORKDIR /tmp/iceoryx2
-RUN git checkout ubicoders_0.7.0
+RUN git checkout "${ICEORYX2_VERSION}"
 RUN bash internal/scripts/install_dependencies_ubuntu.sh
 RUN cmake -S . -B target/ffi/build -DBUILD_EXAMPLES=ON -DCMAKE_PREFIX_PATH="/usr/local/lib"
 RUN cmake --build target/ffi/build -j $(nproc)
@@ -40,7 +45,7 @@ RUN cmake --install target/ffi/build
 # install flatbuffers 23.5.26
 RUN git clone https://github.com/google/flatbuffers.git /tmp/flatbuffers
 WORKDIR /tmp/flatbuffers
-RUN git checkout v23.5.26
+RUN git checkout "${FLATBUFFERS_VERSION}"
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build -j $(nproc)
 RUN cmake --install build

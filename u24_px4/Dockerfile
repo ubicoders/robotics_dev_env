@@ -1,4 +1,8 @@
-FROM ubuntu:24.04
+# Versions come from .env via docker-compose build args.
+ARG UBUNTU_VERSION
+FROM ubuntu:${UBUNTU_VERSION}
+ARG PX4_TOOLCHAIN_VERSION
+ARG EMPY_VERSION
 RUN apt-get update && apt-get upgrade -y
 RUN rm -rf /home/ubuntu/user || true
 RUN mkdir -p /home/ubuntu
@@ -96,15 +100,20 @@ RUN apt-get update && \
 # --------------------
 # PX4 Dependencies & Toolchain
 # --------------------
-COPY requirements.txt /tmp/requirements.txt
-COPY install_px4.bash /tmp/install_px4.bash
+# Upstream setup script and its requirements.txt, fetched at the pinned PX4 tag.
+# Only the toolchain is installed: the PX4 source is not kept in the image.
+ENV PX4_TOOLCHAIN_VERSION=${PX4_TOOLCHAIN_VERSION}
+ENV RUNS_IN_DOCKER=true
+RUN mkdir -p /opt/px4_toolchain && cd /opt/px4_toolchain && \
+    for f in ubuntu.sh requirements.txt; do \
+      curl -fsSL "https://raw.githubusercontent.com/PX4/PX4-Autopilot/${PX4_TOOLCHAIN_VERSION}/Tools/setup/${f}" -o "${f}" || exit 1; \
+    done && \
+    bash ubuntu.sh && \
+    rm -f /opt/px4_toolchain/*.tar.xz && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN chmod +x /tmp/install_px4.bash && \
-    /tmp/install_px4.bash && \
-    rm /tmp/install_px4.bash
-
-# ARM GCC toolchain path
-ENV PATH=/opt/gcc-arm-none-eabi-9-2020-q2-update/bin:${PATH}
+# Xtensa (ESP32) compilers installed by ubuntu.sh
+ENV PATH=/opt/xtensa-esp-elf/bin:${PATH}
 
 
 # --------------------
@@ -113,7 +122,9 @@ ENV PATH=/opt/gcc-arm-none-eabi-9-2020-q2-update/bin:${PATH}
 ENV CONDA_DIR=/miniconda
 ENV PATH=${CONDA_DIR}/bin:${PATH}
 
-RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh && \
+# Installer is pinned in .env: Miniconda3-latest floats to a new Python and breaks wheels.
+ARG MINICONDA_INSTALLER
+RUN curl -fsSL "https://repo.anaconda.com/miniconda/${MINICONDA_INSTALLER}" -o /tmp/miniconda.sh && \
     bash /tmp/miniconda.sh -b -p ${CONDA_DIR} && \
     rm /tmp/miniconda.sh
 
@@ -123,15 +134,14 @@ RUN conda --version && \
 
 RUN conda config --set changeps1 True
 RUN /miniconda/bin/conda init bash
-RUN pip uninstall -y empy
-RUN pip install empy==3.3.4 jsonschema pyserial
 
 # --------------------
 # Python Dependencies via Miniconda Pip
 # --------------------
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
+RUN pip install --no-cache-dir -r /opt/px4_toolchain/requirements.txt -r /tmp/requirements.txt && \
     rm /tmp/requirements.txt
+RUN pip install --no-cache-dir "empy==${EMPY_VERSION}"
 
 
 # --------------------

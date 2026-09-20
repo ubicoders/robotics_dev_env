@@ -1,4 +1,9 @@
 FROM ubicoders/ubuntu:u24_cuda12
+# Versions come from .env via docker-compose build args.
+ARG OPENCV_VERSION
+ARG OPENCV_PYTHON_VERSION
+ARG ZED_PYTHON_VERSION
+ARG ZED_SDK_INSTALLER
 
 # ZED opencv prep for python and c++
 RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
@@ -35,13 +40,13 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
 
 
 # Install OpenCV
-ENV OCV_VERSION_PY=4.12.0.88
-ENV OCV_VERSION_CPP=4.12.0
+ENV OCV_VERSION_PY=${OPENCV_PYTHON_VERSION}
+ENV OCV_VERSION_CPP=${OPENCV_VERSION}
 
 
 # OCV Python
 ## RUN conda create new environment
-RUN conda create -n zed python=3.10
+RUN conda create -n zed python=${ZED_PYTHON_VERSION}
 RUN conda init bash
 RUN /bin/bash -c "conda init"
 RUN echo "conda activate zed" >> ~/.bashrc
@@ -63,8 +68,8 @@ RUN wget -O opencv-${OCV_VERSION_CPP}.zip https://github.com/opencv/opencv/archi
  && make -j"$(nproc)" && make install
 
 # installing zed sdk
-COPY ./ZED_SDK_Ubuntu24_cuda12.8_tensorrt10.9_v5.0.5.zstd.run /home/ZED_SDK_Ubuntu24_cuda12.8_tensorrt10.9_v5.0.5.zstd.run
-RUN /home/ZED_SDK_Ubuntu24_cuda12.8_tensorrt10.9_v5.0.5.zstd.run -- silent
+COPY ./${ZED_SDK_INSTALLER} /home/${ZED_SDK_INSTALLER}
+RUN /home/${ZED_SDK_INSTALLER} -- silent
 
 WORKDIR /usr/local/zed
 
@@ -77,4 +82,4 @@ WORKDIR /home/ubuntu
 
 
 # delete the installers
-#RUN rm /home/ZED_SDK_Ubuntu24_cuda12.8_tensorrt10.9_v5.0.5.zstd.run
+#RUN rm /home/${ZED_SDK_INSTALLER}
