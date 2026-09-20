@@ -5,8 +5,6 @@ FROM osrf/ros:${ROS_DISTRO}-desktop-full-${UBUNTU_CODENAME}
 ARG EMPY_VERSION
 RUN apt update && apt upgrade -y
 # ROS_DISTRO is set as an environment variable by the base image.
-RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /root/.bashrc
-RUN echo "alias python=python3" >> /root/.bashrc
 
 # --------------------
 # Locale / base setup
@@ -100,39 +98,81 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # --------------------
-# ROS 2 extras (rosdep, DDS deps already covered)
+# User ubuntu with the host UID and GID. Root work ends here.
 # --------------------
-RUN rosdep update
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+RUN apt-get update && apt-get install -y --no-install-recommends sudo && rm -rf /var/lib/apt/lists/*
+RUN if id ubuntu >/dev/null 2>&1; then \
+      groupmod -g ${HOST_GID} ubuntu && usermod -u ${HOST_UID} -g ${HOST_GID} ubuntu; \
+    else \
+      groupadd -g ${HOST_GID} ubuntu && \
+      useradd -m -s /bin/bash -u ${HOST_UID} -g ${HOST_GID} ubuntu; \
+    fi && \
+    chown -R ubuntu:ubuntu /home/ubuntu && \
+    echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu && \
+    chmod 0440 /etc/sudoers.d/ubuntu
 
 # --------------------
-# Miniconda (non-interactive)
+# Miniconda, installed and initialized as ubuntu
 # --------------------
 ENV CONDA_DIR=/miniconda
 ENV PATH=${CONDA_DIR}/bin:${PATH}
+RUN mkdir -p ${CONDA_DIR} && chown ubuntu:ubuntu ${CONDA_DIR}
+
+USER ubuntu
+WORKDIR /home/ubuntu
 
 # Installer is pinned in .env: Miniconda3-latest floats to a new Python and breaks wheels.
 ARG MINICONDA_INSTALLER
 RUN curl -fsSL "https://repo.anaconda.com/miniconda/${MINICONDA_INSTALLER}" -o /tmp/miniconda.sh && \
-    bash /tmp/miniconda.sh -b -p ${CONDA_DIR} && \
-    rm /tmp/miniconda.sh
-
-RUN conda --version && \
-    conda config --set always_yes yes --set changeps1 no && \
-    conda clean -afy || true
-
-RUN conda config --set changeps1 True
-RUN /miniconda/bin/conda init bash
+    bash /tmp/miniconda.sh -b -u -p ${CONDA_DIR} && \
+    rm /tmp/miniconda.sh && \
+    conda config --system --set always_yes yes && \
+    conda config --system --set changeps1 true && \
+    conda init bash && \
+    conda clean -afy
 
 # --------------------
 # Python Dependencies via Miniconda Pip
 # --------------------
-COPY common/requirements.txt /tmp/requirements.txt
+COPY --chown=ubuntu:ubuntu common/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
 rm /tmp/requirements.txt
 RUN pip install --no-cache-dir "empy==${EMPY_VERSION}"
 
 # --------------------
+# ROS 2 extras
+# --------------------
+RUN rosdep update
+
+# --------------------
+# Rust for ROS 2: rclrs (ros2_rust) and r2r. Rust lives in /opt/rust, on PATH for every shell.
+# --------------------
+ARG RUST_VERSION
+ARG ROS2_RUST_VERSION
+ARG R2R_VERSION
+ARG CARGO_AMENT_BUILD_VERSION
+ARG COLCON_CARGO_VERSION
+ARG COLCON_ROS_CARGO_VERSION
+ARG ROSIDL_RUST_VERSION
+ARG ROSIDL_RUNTIME_RS_VERSION
+ENV RUSTUP_HOME=/opt/rust/rustup
+ENV CARGO_HOME=/opt/rust/cargo
+ENV PATH=/opt/rust/cargo/bin:${PATH}
+ENV R2R_VERSION=${R2R_VERSION}
+COPY --chown=ubuntu:ubuntu common/install_ros2_rust.bash /tmp/install_ros2_rust.bash
+RUN bash /tmp/install_ros2_rust.bash && rm /tmp/install_ros2_rust.bash
+
+# --------------------
+# Shell setup: new terminals open with (base), ROS 2, and the rclrs overlay ready
+# --------------------
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/ubuntu/.bashrc && \
+    echo "source /opt/ros2_rust/setup.bash" >> /home/ubuntu/.bashrc && \
+    echo "alias python=python3" >> /home/ubuntu/.bashrc
+
+# --------------------
 # Default workspace
 # --------------------
 RUN mkdir -p /home/ubuntu/robot_ws/src
-WORKDIR /home/ubuntu/
+CMD ["/bin/bash"]

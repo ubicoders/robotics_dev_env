@@ -58,7 +58,7 @@ The compose services forward X11, mount `/dev`, and use host networking. The `cu
 
 Pushing starts only after every selected build has succeeded, so a child image is never published on a stale parent.
 
-`cuda_ocv_zed` needs the ZED SDK installer named by `ZED_SDK_INSTALLER` in `.env`. Download it from Stereolabs and place it in `images/cuda/ocv_zed/`. It is ignored by git.
+`cuda_ocv_zed` installs the ZED SDK from an installer in `images/cuda/ocv_zed/zed_sdk/`. Download installers from Stereolabs into that folder (they are ignored by git) and set `ZED_SDK_INSTALLER` in `.env` to the file name to use. The installer must match the Ubuntu and CUDA versions of the base image.
 
 ## Change a version
 

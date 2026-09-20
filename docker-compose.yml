@@ -57,8 +57,23 @@ services:
         UBUNTU_CODENAME: ${UBUNTU_CODENAME}
         MINICONDA_INSTALLER: ${MINICONDA_INSTALLER}
         EMPY_VERSION: ${EMPY_VERSION}
+        RUST_VERSION: ${RUST_VERSION}
+        ROS2_RUST_VERSION: ${ROS2_RUST_VERSION}
+        R2R_VERSION: ${R2R_VERSION}
+        CARGO_AMENT_BUILD_VERSION: ${CARGO_AMENT_BUILD_VERSION}
+        COLCON_CARGO_VERSION: ${COLCON_CARGO_VERSION}
+        COLCON_ROS_CARGO_VERSION: ${COLCON_ROS_CARGO_VERSION}
+        ROSIDL_RUST_VERSION: ${ROSIDL_RUST_VERSION}
+        ROSIDL_RUNTIME_RS_VERSION: ${ROSIDL_RUNTIME_RS_VERSION}
+        HOST_UID: ${HOST_UID:-1000}
+        HOST_GID: ${HOST_GID:-1000}
     image: ubicoders/ros2:${ROS_DISTRO}
     <<: *default-configuration
+    # Runs as ubuntu, so the home mount differs from the root-based services.
+    volumes:
+      - "/tmp/.X11-unix/:/tmp/.X11-unix/:rw"
+      - "$HOME/.Xauthority:/home/ubuntu/.Xauthority:rw"
+      - "/dev/:/dev/"
 
   ros2_px4:
     container_name: ubicoders_ros2_jazzy_px4_cnt

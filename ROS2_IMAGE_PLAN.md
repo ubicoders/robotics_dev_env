@@ -46,7 +46,7 @@ nvidia/cuda:${CUDA_VERSION}-cudnn-devel-ubuntu${UBUNTU_VERSION}
 
 The `ros2:jazzy_vrobots` and `ros2:jazzy_svo_vrobots` images were deprecated and then removed from the repository on 2026-09-20, together with their compose services and the `.env` variables only they used (`RUST_TOOLCHAIN`, `FLATBUFFERS_VERSION`, `ICEORYX2_VERSION`). Their definitions are preserved in git tag `2026-Q1`. Their old tags are kept on Docker Hub on purpose and must not be deleted.
 
-No active image contains iceoryx2, zenoh, or a Rust toolchain.
+No active image contains iceoryx2 or zenoh. Rust is part of the ROS 2 base image, see "Rust support".
 
 ### Folder layout
 
@@ -115,6 +115,32 @@ In `ros2:jazzy_px4`, conda is already on `PATH` when `ubuntu.sh` runs, so the PX
 | 7 | Remove deprecated images | Done in the repository on 2026-09-20. The old `jazzy_vrobots` and `jazzy_svo_vrobots` tags stay on Docker Hub on purpose, for existing users. Do not delete them. |
 | 8 | Parallel builds | The PX4, lineage A, and lineage B chains are independent and can build in parallel lanes. Deferred: source builds already use every core, so the gain is mostly in download and apt time. |
 | 9 | Service names | Done: compose services are distro-neutral. Container names still contain `jazzy`. |
+
+## Rust support (rclrs and r2r)
+
+Rust support lives inside the ROS 2 base images, not in separate images.
+
+| Image | Status |
+|---|---|
+| `ros2:jazzy` (`images/ros2/base/`) | Built and tested locally on 2026-09-20, not pushed |
+| `ros2:jazzy_cuda12` (`images/cuda/ros2/`) | Not done yet |
+
+- One script, `common/install_ros2_rust.bash`, run as user `ubuntu`.
+- Rust toolchain in `/opt/rust`, on `PATH` for every shell, owned by `ubuntu`.
+- rclrs overlay in `/opt/ros2_rust`, sourced from `/home/ubuntu/.bashrc`.
+- `r2r` needs only the toolchain and `libclang`; it is a normal cargo dependency.
+- The image build runs a smoke test for each library and fails if either breaks.
+
+| `.env` key | Value | Note |
+|---|---|---|
+| `RUST_VERSION` | 1.98.1 | rclrs needs 1.85 or newer; Ubuntu apt has 1.75 |
+| `ROS2_RUST_VERSION` | v0.7.0 | rclrs release |
+| `ROSIDL_RUST_VERSION` | 0.4.12 | 0.5.0 changed the message scheme and breaks rclrs 0.7.0 |
+| `ROSIDL_RUNTIME_RS_VERSION` | v0.6.1 | matches rclrs 0.7.0 |
+| `R2R_VERSION` | 0.9.7 | |
+| `CARGO_AMENT_BUILD_VERSION`, `COLCON_CARGO_VERSION`, `COLCON_ROS_CARGO_VERSION` | 0.1.11, 0.2.0, 0.2.0 | |
+
+The base image now runs as `ubuntu` (see the `dockerfile-baseline` skill). Its children (`ros2_px4`, `ros2_px4_uxrcedds`, `ros2_svo`) still assume root and need `USER root` for their root steps before they are rebuilt.
 
 ## Changing a version
 

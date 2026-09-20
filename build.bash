@@ -14,6 +14,9 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
+# Images that run as the ubuntu user take the host IDs. Bash does not export UID.
+export HOST_UID="$(id -u)" HOST_GID="$(id -g)"
+
 # Parents before children. Add a new image after its parent.
 SERVICES=(
     px4

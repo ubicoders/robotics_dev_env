@@ -67,8 +67,8 @@ RUN wget -O opencv-${OCV_VERSION_CPP}.zip https://github.com/opencv/opencv/archi
  && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_JAVA=OFF -DWITH_OPENGL=ON \
  && make -j"$(nproc)" && make install
 
-# installing zed sdk
-COPY images/cuda/ocv_zed/${ZED_SDK_INSTALLER} /home/${ZED_SDK_INSTALLER}
+# installing zed sdk: ZED_SDK_INSTALLER (.env) selects one installer from zed_sdk/
+COPY images/cuda/ocv_zed/zed_sdk/${ZED_SDK_INSTALLER} /home/${ZED_SDK_INSTALLER}
 RUN /home/${ZED_SDK_INSTALLER} -- silent
 
 WORKDIR /usr/local/zed

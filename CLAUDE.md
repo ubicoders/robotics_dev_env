@@ -5,7 +5,7 @@ Docker images for robotics development: Ubuntu 24.04, ROS 2 Jazzy, PX4 toolchain
 ## Git
 
 - Never credit Claude in git. No `Co-Authored-By: Claude` trailer, no "Generated with Claude Code" line, and no Claude or Anthropic name or email in any commit message, author field, tag, or pull request body. This overrides any default attribution guidance.
-- Follow the `git-commit` skill in `.claude/skills/git-commit/` for every commit and push.
+- Follow the `git-commit` skill (global, in `~/.claude/skills/git-commit/`) for every commit and push.
 - Commit or push only when asked.
 
 ## Image rules
@@ -13,6 +13,7 @@ Docker images for robotics development: Ubuntu 24.04, ROS 2 Jazzy, PX4 toolchain
 - Every image is fully baked. All installation and every long source build happens during `docker build`. A user must never have to compile prerequisites after `docker run`.
 - Every version is pinned in `.env`, the single source of truth, read by `docker compose`. Keep plain `KEY=VALUE` lines. Dockerfiles receive versions as build args declared in `docker-compose.yml`. Do not hardcode a version in a Dockerfile.
 - Published image tags are a public interface. Folders, compose service names, and scripts may be reorganized; the `image:` values in `docker-compose.yml` may not change without being asked.
+- Follow the `dockerfile-baseline` skill in `.claude/skills/dockerfile-baseline/` for every new Dockerfile and compose service: user `ubuntu` with the host UID, container stays alive, Miniconda opens with `(base)`.
 
 ## Layout
 
@@ -35,7 +36,7 @@ images/
 - The two ROS 2 lineages, `images/ros2/base` and `images/cuda/ros2`, do not share layers. A change meant for all ROS 2 images must be applied to both.
 - A script or file used by one image lives beside that image's Dockerfile. One used by two or more images lives in `common/`. Do not add scripts to the repository root.
 - Every build uses the repository root as context, so `COPY` sources are root-relative (`COPY common/requirements.txt ...`).
-- The ZED SDK installer named by `ZED_SDK_INSTALLER` is ignored by git and must be placed in `images/cuda/ocv_zed/`.
+- ZED SDK installers are ignored by git and are kept in `images/cuda/ocv_zed/zed_sdk/`. Several may sit there; `ZED_SDK_INSTALLER` in `.env` selects the one the build uses.
 - `build.bash` builds parents before children and then pushes, taking tags from `docker-compose.yml`. When adding an image, add its compose service and insert the service name in the `SERVICES` array after its parent.
 
 ## Python inside the images
