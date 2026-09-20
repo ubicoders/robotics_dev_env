@@ -39,6 +39,11 @@ images/
 - ZED SDK installers are ignored by git and are kept in `images/cuda/ocv_zed/zed_sdk/`. Several may sit there; `ZED_SDK_INSTALLER` in `.env` selects the one the build uses.
 - `build.bash` builds parents before children and then pushes, taking tags from `docker-compose.yml`. When adding an image, add its compose service and insert the service name in the `SERVICES` array after its parent.
 
+## User and Rust inside the images
+
+- Every image runs as user `ubuntu` with passwordless `sudo`, per the `dockerfile-baseline` skill. Lineage roots create the user; a child wraps its root steps in `USER root` ... `USER ubuntu`.
+- All ROS 2 images carry Rust for both `rclrs` and `r2r`: toolchain in `/opt/rust`, rclrs overlay in `/opt/ros2_rust`, installed by `common/install_ros2_rust.bash` from `images/ros2/base` and `images/cuda/ros2`. `ROS2_RUST_VERSION`, `ROSIDL_RUST_VERSION`, and `ROSIDL_RUNTIME_RS_VERSION` in `.env` must be bumped together.
+
 ## Python inside the images
 
 Miniconda (`/miniconda`) is first on `PATH`, but `colcon` and the ROS 2 tooling run on the system interpreter (`/usr/bin/python3`). Install colcon plugins and other ROS build dependencies with `/usr/bin/python3 -m pip install --break-system-packages`, never with bare `pip`. `use_conda.bash` and `use_system_python.bash` switch the active interpreter inside a container.

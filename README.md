@@ -1,6 +1,6 @@
 # robotics_dev_env
 
-Docker images for robotics development on Ubuntu 24.04: ROS 2 Jazzy, the PX4 toolchain, CUDA, OpenCV, and the ZED SDK. Images are published under `ubicoders/` on Docker Hub. Every image is fully baked: nothing has to be compiled after `docker run`.
+Docker images for robotics development on Ubuntu 24.04: ROS 2 Jazzy, the PX4 toolchain, CUDA, OpenCV, and the ZED SDK. Images are published under `ubicoders/` on Docker Hub. Every image is fully baked: nothing has to be compiled after `docker run`. Every image runs as user `ubuntu` with passwordless `sudo`, and every ROS 2 image includes Rust with `rclrs` and `r2r`.
 
 ## Images
 

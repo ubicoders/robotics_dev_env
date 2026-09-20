@@ -122,8 +122,10 @@ Rust support lives inside the ROS 2 base images, not in separate images.
 
 | Image | Status |
 |---|---|
-| `ros2:jazzy` (`images/ros2/base/`) | Built and tested locally on 2026-09-20, not pushed |
-| `ros2:jazzy_cuda12` (`images/cuda/ros2/`) | Not done yet |
+| `ros2:jazzy` (`images/ros2/base/`) | Built, tested, and pushed on 2026-09-20 |
+| `ros2:jazzy_cuda12` (`images/cuda/ros2/`) | Built, tested, and pushed on 2026-09-20 |
+
+`ros2:jazzy_px4`, `ros2:jazzy_px4_uxrcedds`, and `ros2:jazzy_svo` inherit Rust from `ros2:jazzy`.
 
 - One script, `common/install_ros2_rust.bash`, run as user `ubuntu`.
 - Rust toolchain in `/opt/rust`, on `PATH` for every shell, owned by `ubuntu`.
@@ -140,7 +142,7 @@ Rust support lives inside the ROS 2 base images, not in separate images.
 | `R2R_VERSION` | 0.9.7 | |
 | `CARGO_AMENT_BUILD_VERSION`, `COLCON_CARGO_VERSION`, `COLCON_ROS_CARGO_VERSION` | 0.1.11, 0.2.0, 0.2.0 | |
 
-The base image now runs as `ubuntu` (see the `dockerfile-baseline` skill). Its children (`ros2_px4`, `ros2_px4_uxrcedds`, `ros2_svo`) still assume root and need `USER root` for their root steps before they are rebuilt.
+Every image runs as user `ubuntu` (see the `dockerfile-baseline` skill). The three lineage roots (`images/px4`, `images/ros2/base`, `images/cuda/base`) set the user up and install Miniconda as `ubuntu`. A child image uses `USER root` for its root steps and then returns to `USER ubuntu`.
 
 ## Changing a version
 

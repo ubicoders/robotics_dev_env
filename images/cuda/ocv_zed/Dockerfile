@@ -53,11 +53,13 @@ RUN wget -O opencv-${OCV_VERSION_CPP}.zip https://github.com/opencv/opencv/archi
 # installing zed sdk: ZED_SDK_INSTALLER (.env) selects one installer from zed_sdk/
 # The installer is removed in the same layer so it does not stay in the image.
 # It runs as root, so the SDK folder (models are written there at run time) and anything
-# it touched in /miniconda are handed back to ubuntu.
+# it touched in /miniconda are handed back to ubuntu. It also deletes /etc/sudoers.d/ubuntu,
+# which is restored.
 RUN --mount=type=bind,source=images/cuda/ocv_zed/zed_sdk/${ZED_SDK_INSTALLER},target=/tmp/zed_sdk.run \
     cp /tmp/zed_sdk.run /tmp/zed_install.run && chmod +x /tmp/zed_install.run && \
     /tmp/zed_install.run -- silent && rm -f /tmp/zed_install.run && \
     chown -R ubuntu:ubuntu /usr/local/zed && \
+    echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu && chmod 0440 /etc/sudoers.d/ubuntu && \
     find /miniconda -user root -exec chown -h ubuntu:ubuntu {} +
 
 # --------------------
