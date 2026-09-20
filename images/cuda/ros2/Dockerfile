@@ -1,6 +1,8 @@
 FROM ubicoders/ubuntu:u24_cuda12
 # Versions come from .env via docker-compose build args.
 ARG ROS_DISTRO
+# The parent image runs as ubuntu; root steps first.
+USER root
 RUN apt-get update && apt-get upgrade -y
 
 # --------------------
@@ -28,8 +30,6 @@ RUN apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Always source ROS 2 Jazzy in root bashrc (as requested)
-RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /root/.bashrc
 
 # --------------------
 # ROS visualization / URDF helpers
@@ -66,13 +66,38 @@ RUN apt-get update && apt-get install -y \
 # --------------------
 RUN apt-get update && apt-get install -y python3-rosdep \
     && rosdep init \
-    && rosdep update \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+USER ubuntu
+WORKDIR /home/ubuntu
+RUN rosdep update
+
+# --------------------
+# Rust for ROS 2: rclrs (ros2_rust) and r2r. Rust lives in /opt/rust, on PATH for every shell.
+# --------------------
+ARG RUST_VERSION
+ARG ROS2_RUST_VERSION
+ARG R2R_VERSION
+ARG CARGO_AMENT_BUILD_VERSION
+ARG COLCON_CARGO_VERSION
+ARG COLCON_ROS_CARGO_VERSION
+ARG ROSIDL_RUST_VERSION
+ARG ROSIDL_RUNTIME_RS_VERSION
+ENV RUSTUP_HOME=/opt/rust/rustup
+ENV CARGO_HOME=/opt/rust/cargo
+ENV PATH=/opt/rust/cargo/bin:${PATH}
+ENV R2R_VERSION=${R2R_VERSION}
+COPY --chown=ubuntu:ubuntu common/install_ros2_rust.bash /tmp/install_ros2_rust.bash
+RUN bash /tmp/install_ros2_rust.bash && rm /tmp/install_ros2_rust.bash
+
+# --------------------
+# Shell setup: new terminals open with (base), ROS 2, and the rclrs overlay ready
+# --------------------
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/ubuntu/.bashrc && \
+    echo "source /opt/ros2_rust/setup.bash" >> /home/ubuntu/.bashrc
 
 # --------------------
 # Default workspace
 # --------------------
 RUN mkdir -p /home/ubuntu/robot_ws/src
-WORKDIR /home/ubuntu/
-
-
+CMD ["/bin/bash"]

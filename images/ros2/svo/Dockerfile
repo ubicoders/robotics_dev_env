@@ -4,6 +4,9 @@ FROM ubicoders/ros2:${ROS_DISTRO}
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# The parent image runs as ubuntu; root steps first.
+USER root
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Base dependencies for building VO third-party libraries
@@ -53,6 +56,7 @@ RUN cd "${DEPS_DIR}" && \
     make install && \
     ldconfig
 
+USER ubuntu
 WORKDIR /home/ubuntu
-COPY common/use_conda.bash /home/ubuntu/use_conda.bash
-COPY common/use_system_python.bash /home/ubuntu/use_system_python.bash
+COPY --chown=ubuntu:ubuntu common/use_conda.bash /home/ubuntu/use_conda.bash
+COPY --chown=ubuntu:ubuntu common/use_system_python.bash /home/ubuntu/use_system_python.bash

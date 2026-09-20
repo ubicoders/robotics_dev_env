@@ -4,6 +4,8 @@ FROM ubicoders/ros2:${ROS_DISTRO}
 ARG PX4_TOOLCHAIN_VERSION
 ARG PX4_MSGS_VERSION
 ARG EMPY_VERSION
+# The parent image runs as ubuntu; root steps first.
+USER root
 RUN apt update && apt upgrade -y
 
 # --------------------
@@ -103,12 +105,12 @@ ENV PATH=/opt/xtensa-esp-elf/bin:${PATH}
 # --------------------
 # Workspace & Scripts
 # --------------------
+USER ubuntu
 WORKDIR /home/ubuntu
-RUN mkdir -p /home/ubuntu
 
-COPY common/download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash
-COPY images/ros2/px4/download_bridge_px4_ros.bash /home/ubuntu/download_bridge_px4_ros.bash
-COPY common/requirements.txt /tmp/requirements.txt
+COPY --chown=ubuntu:ubuntu common/download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash
+COPY --chown=ubuntu:ubuntu images/ros2/px4/download_bridge_px4_ros.bash /home/ubuntu/download_bridge_px4_ros.bash
+COPY --chown=ubuntu:ubuntu common/requirements.txt /tmp/requirements.txt
 
 # --------------------
 # Python Dependencies via Miniconda Pip
@@ -116,5 +118,3 @@ COPY common/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /opt/px4_toolchain/requirements.txt -r /tmp/requirements.txt && \
     rm /tmp/requirements.txt
 RUN pip install --no-cache-dir "empy==${EMPY_VERSION}"
-
-

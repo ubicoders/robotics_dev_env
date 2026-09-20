@@ -24,7 +24,7 @@ fi
 # 4. Ensure python maps to python3
 if [ ! -f /usr/bin/python ]; then
     echo "Creating symlink for /usr/bin/python..."
-    ln -sf /usr/bin/python3 /usr/bin/python
+    sudo ln -sf /usr/bin/python3 /usr/bin/python
 fi
 source ~/.bashrc
 echo "Done. Please run: source ~/.bashrc"

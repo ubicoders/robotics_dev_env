@@ -5,17 +5,19 @@ description: |
   `ubuntu` with the host's UID and GID, the container stays alive for
   `docker exec` and VS Code attach (tty, stdin_open, privileged), and an image
   with Miniconda opens every new terminal with `(base)` already active, without
-  `source ~/.bashrc`. Use whenever creating or editing a Dockerfile, adding a
+  `source ~/.bashrc`, and a ROS 2 image sources `/opt/ros/<distro>/setup.bash`
+  in the `ubuntu` `.bashrc` so `ros2` works in every new terminal. Use whenever creating or editing a Dockerfile, adding a
   compose service, or adding an image. Keywords: Dockerfile, docker compose,
   new image, user, ubuntu, UID, GID, host user, permissions, root, sudo, tty,
   stdin_open, privileged, container exits, keep alive, attach, VS Code, dev
-  container, miniconda, conda, base, bashrc, conda init
+  container, miniconda, conda, base, bashrc, conda init, ROS 2, ros2, jazzy,
+  setup.bash, source, /opt/ros, ros2 command not found
 user-invocable: true
 ---
 
 # Dockerfile baseline
 
-Apply all four sections to every new Dockerfile. When editing an existing
+Apply all five sections to every new Dockerfile. When editing an existing
 Dockerfile that does not yet meet them, say so and ask before converting it.
 
 ## 1. User `ubuntu`, host UID and GID
@@ -116,14 +118,38 @@ RUN curl -fsSL "https://repo.anaconda.com/miniconda/${MINICONDA_INSTALLER}" -o /
   `/home/ubuntu/.bashrc` after `conda init`.
 - `MINICONDA_INSTALLER` is pinned in `.env`, per the image rules in `CLAUDE.md`.
 
-## 4. Verify before reporting done
+## 4. ROS 2 images source the ROS environment
+
+Applies only to images that contain ROS 2. A new terminal must have `ros2`,
+`colcon`, and the ROS environment variables available with no manual `source`.
+
+```dockerfile
+USER ubuntu
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/ubuntu/.bashrc
+```
+
+- Use `${ROS_DISTRO}`, never a literal distro name. `osrf/ros` bases export it;
+  on other bases declare `ARG ROS_DISTRO` and `ENV ROS_DISTRO=${ROS_DISTRO}`,
+  with the value pinned in `.env`.
+- Write to the `.bashrc` of the container user, `/home/ubuntu/.bashrc`, never
+  `/root/.bashrc`.
+- Do this once, in the lineage root (`images/ros2/base`, `images/cuda/ros2`).
+  Children inherit the line and must not append it again.
+- An image that builds an extra workspace or overlay appends its own
+  `setup.bash` after the ROS line, for example
+  `source /opt/ros2_rust/setup.bash`. Underlay first, overlays after.
+- `.bashrc` is read by interactive shells only. A `RUN` step that needs ROS
+  sources it explicitly: `RUN . /opt/ros/${ROS_DISTRO}/setup.sh && colcon build`.
+
+## 5. Verify before reporting done
 
 Build, then run:
 
 ```bash
-docker run --rm -t <image> bash -ic 'id; echo "$CONDA_DEFAULT_ENV"; sudo -n true && echo sudo_ok'
+docker run --rm -t <image> bash -ic 'id; echo "$CONDA_DEFAULT_ENV"; sudo -n true && echo sudo_ok; echo "$ROS_DISTRO"; command -v ros2'
 ```
 
 Expected: `uid=<host uid>(ubuntu) gid=<host gid>(ubuntu)`, `base` (Miniconda
-images only), and `sudo_ok`. Then `docker compose up -d <service>` and confirm
+images only), `sudo_ok`, and the distro name with `/opt/ros/<distro>/bin/ros2`
+(ROS 2 images only). Then `docker compose up -d <service>` and confirm
 with `docker ps` that the container is still running.

@@ -117,37 +117,51 @@ ENV PATH=/opt/xtensa-esp-elf/bin:${PATH}
 
 
 # --------------------
-# Miniconda (non-interactive)
+# User ubuntu with the host UID and GID. Root work ends here.
+# --------------------
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+RUN apt-get update && apt-get install -y --no-install-recommends sudo && rm -rf /var/lib/apt/lists/*
+RUN if id ubuntu >/dev/null 2>&1; then \
+      groupmod -g ${HOST_GID} ubuntu && usermod -u ${HOST_UID} -g ${HOST_GID} ubuntu; \
+    else \
+      groupadd -g ${HOST_GID} ubuntu && \
+      useradd -m -s /bin/bash -u ${HOST_UID} -g ${HOST_GID} ubuntu; \
+    fi && \
+    mkdir -p /home/ubuntu && chown -R ubuntu:ubuntu /home/ubuntu && \
+    echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ubuntu && \
+    chmod 0440 /etc/sudoers.d/ubuntu
+
+# --------------------
+# Miniconda, installed and initialized as ubuntu
 # --------------------
 ENV CONDA_DIR=/miniconda
 ENV PATH=${CONDA_DIR}/bin:${PATH}
+RUN mkdir -p ${CONDA_DIR} && chown ubuntu:ubuntu ${CONDA_DIR}
+
+USER ubuntu
+WORKDIR /home/ubuntu
 
 # Installer is pinned in .env: Miniconda3-latest floats to a new Python and breaks wheels.
 ARG MINICONDA_INSTALLER
 RUN curl -fsSL "https://repo.anaconda.com/miniconda/${MINICONDA_INSTALLER}" -o /tmp/miniconda.sh && \
-    bash /tmp/miniconda.sh -b -p ${CONDA_DIR} && \
-    rm /tmp/miniconda.sh
-
-RUN conda --version && \
-    conda config --set always_yes yes --set changeps1 no && \
-    conda clean -afy || true
-
-RUN conda config --set changeps1 True
-RUN /miniconda/bin/conda init bash
+    bash /tmp/miniconda.sh -b -u -p ${CONDA_DIR} && \
+    rm /tmp/miniconda.sh && \
+    conda config --system --set always_yes yes && \
+    conda config --system --set changeps1 true && \
+    conda init bash && \
+    conda clean -afy
 
 # --------------------
 # Python Dependencies via Miniconda Pip
 # --------------------
-COPY common/requirements.txt /tmp/requirements.txt
+COPY --chown=ubuntu:ubuntu common/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /opt/px4_toolchain/requirements.txt -r /tmp/requirements.txt && \
     rm /tmp/requirements.txt
 RUN pip install --no-cache-dir "empy==${EMPY_VERSION}"
 
-
 # --------------------
 # Workspace & Scripts
 # --------------------
-WORKDIR /home/ubuntu
-RUN mkdir -p /home/ubuntu
-
-COPY common/download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash
+COPY --chown=ubuntu:ubuntu common/download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash
+CMD ["/bin/bash"]
