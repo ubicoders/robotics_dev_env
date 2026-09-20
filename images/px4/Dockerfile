@@ -1,12 +1,11 @@
 # Versions come from .env via docker-compose build args.
-ARG ROS_DISTRO
-ARG UBUNTU_CODENAME
-FROM osrf/ros:${ROS_DISTRO}-desktop-full-${UBUNTU_CODENAME}
+ARG UBUNTU_VERSION
+FROM ubuntu:${UBUNTU_VERSION}
+ARG PX4_TOOLCHAIN_VERSION
 ARG EMPY_VERSION
-RUN apt update && apt upgrade -y
-# ROS_DISTRO is set as an environment variable by the base image.
-RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /root/.bashrc
-RUN echo "alias python=python3" >> /root/.bashrc
+RUN apt-get update && apt-get upgrade -y
+RUN rm -rf /home/ubuntu/user || true
+RUN mkdir -p /home/ubuntu
 
 # --------------------
 # Locale / base setup
@@ -29,10 +28,9 @@ RUN apt-get update && apt-get install -y \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
 
 # --------------------
-# System packages
+# System Packages
 # --------------------
 RUN apt-get update && \
-    apt-get upgrade -y && \
     apt-get -y --quiet --no-install-recommends install \
       apt-utils \
       autoconf \
@@ -79,10 +77,10 @@ RUN apt-get update && \
       picocom \
       minicom \
       screen \
+      sudo \
       pkg-config \
       python3-dev \
       python3-pip \
-      python3-tk \
       rsync \
       software-properties-common \
       shellcheck \
@@ -100,9 +98,23 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # --------------------
-# ROS 2 extras (rosdep, DDS deps already covered)
+# PX4 Dependencies & Toolchain
 # --------------------
-RUN rosdep update
+# Upstream setup script and its requirements.txt, fetched at the pinned PX4 tag.
+# Only the toolchain is installed: the PX4 source is not kept in the image.
+ENV PX4_TOOLCHAIN_VERSION=${PX4_TOOLCHAIN_VERSION}
+ENV RUNS_IN_DOCKER=true
+RUN mkdir -p /opt/px4_toolchain && cd /opt/px4_toolchain && \
+    for f in ubuntu.sh requirements.txt; do \
+      curl -fsSL "https://raw.githubusercontent.com/PX4/PX4-Autopilot/${PX4_TOOLCHAIN_VERSION}/Tools/setup/${f}" -o "${f}" || exit 1; \
+    done && \
+    bash ubuntu.sh && \
+    rm -f /opt/px4_toolchain/*.tar.xz && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Xtensa (ESP32) compilers installed by ubuntu.sh
+ENV PATH=/opt/xtensa-esp-elf/bin:${PATH}
+
 
 # --------------------
 # Miniconda (non-interactive)
@@ -126,13 +138,16 @@ RUN /miniconda/bin/conda init bash
 # --------------------
 # Python Dependencies via Miniconda Pip
 # --------------------
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
-rm /tmp/requirements.txt
+COPY common/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /opt/px4_toolchain/requirements.txt -r /tmp/requirements.txt && \
+    rm /tmp/requirements.txt
 RUN pip install --no-cache-dir "empy==${EMPY_VERSION}"
 
+
 # --------------------
-# Default workspace
+# Workspace & Scripts
 # --------------------
-RUN mkdir -p /home/ubuntu/robot_ws/src
-WORKDIR /home/ubuntu/
+WORKDIR /home/ubuntu
+RUN mkdir -p /home/ubuntu
+
+COPY common/download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash

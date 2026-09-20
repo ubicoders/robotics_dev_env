@@ -119,7 +119,7 @@ RUN /miniconda/bin/conda init bash
 # --------------------
 # Python Dependencies via Miniconda Pip
 # --------------------
-COPY requirements.txt /tmp/requirements.txt
+COPY common/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
 rm /tmp/requirements.txt
 RUN pip install --no-cache-dir "empy==${EMPY_VERSION}"

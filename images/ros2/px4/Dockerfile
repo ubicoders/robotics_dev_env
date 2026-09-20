@@ -106,9 +106,9 @@ ENV PATH=/opt/xtensa-esp-elf/bin:${PATH}
 WORKDIR /home/ubuntu
 RUN mkdir -p /home/ubuntu
 
-COPY download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash
-COPY download_bridge_px4_ros.bash /home/ubuntu/download_bridge_px4_ros.bash
-COPY requirements.txt /tmp/requirements.txt
+COPY common/download_px4_autopilot.bash /home/ubuntu/download_px4_autopilot.bash
+COPY images/ros2/px4/download_bridge_px4_ros.bash /home/ubuntu/download_bridge_px4_ros.bash
+COPY common/requirements.txt /tmp/requirements.txt
 
 # --------------------
 # Python Dependencies via Miniconda Pip

@@ -54,5 +54,5 @@ RUN cd "${DEPS_DIR}" && \
     ldconfig
 
 WORKDIR /home/ubuntu
-COPY use_conda.bash /home/ubuntu/use_conda.bash
-COPY use_system_python.bash /home/ubuntu/use_system_python.bash
+COPY common/use_conda.bash /home/ubuntu/use_conda.bash
+COPY common/use_system_python.bash /home/ubuntu/use_system_python.bash

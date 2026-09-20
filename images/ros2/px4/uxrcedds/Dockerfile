@@ -6,7 +6,7 @@ ARG EMPY_VERSION
 RUN apt update && apt upgrade -y
 
 ENV UXRCE_DDS_AGENT_VERSION=${UXRCE_DDS_AGENT_VERSION}
-COPY install_uxrce.bash /home/ubuntu/install_uxrce.bash
+COPY images/ros2/px4/uxrcedds/install_uxrce.bash /home/ubuntu/install_uxrce.bash
 WORKDIR /home/ubuntu
 RUN bash /home/ubuntu/install_uxrce.bash
 RUN rm /home/ubuntu/install_uxrce.bash
